@@ -1,7 +1,7 @@
 import { Seminar, Session, Registration, Attendance } from './types';
 
 // Standard ISO dates for realistic schedules
-const now = new Date();
+const now = new Date('2021-07-08T12:00:00Z');
 const dateISO = (daysOffset: number, hoursOffset: number = 0) => {
   const d = new Date(now);
   d.setDate(d.getDate() + daysOffset);
@@ -12,7 +12,7 @@ const dateISO = (daysOffset: number, hoursOffset: number = 0) => {
 export const INITIAL_MOCK_SEMINARS: Seminar[] = [
   {
     id: 'sem_tech_summit',
-    title: 'Global Tech Innovations Summit 2026',
+    title: 'Global Tech Innovations Summit 2021',
     description: 'An immersive summit exploring the vanguard of software development, serverless scaling, and cloud architecture. This seminar features leading engineers speaking on state-of-the-art developer operations, AI-assisted coding, and lightning-fast full-stack runtimes.',
     startDate: dateISO(2, 9), // 2 days from now at 9:00 AM
     endDate: dateISO(2, 17),  // 2 days from now at 5:00 PM
@@ -119,7 +119,7 @@ export const INITIAL_MOCK_REGISTRATIONS: Registration[] = [
     userName: 'Jane Doe (Demo)',
     userEmail: 'janedoe@example.com',
     seminarId: 'sem_tech_summit',
-    seminarTitle: 'Global Tech Innovations Summit 2026',
+    seminarTitle: 'Global Tech Innovations Summit 2021',
     code: 'REG-JANETECH',
     status: 'registered',
     createdAt: dateISO(-4),
@@ -131,7 +131,7 @@ export const INITIAL_MOCK_REGISTRATIONS: Registration[] = [
     userName: 'Bob Smith',
     userEmail: 'bob.smith@example.com',
     seminarId: 'sem_tech_summit',
-    seminarTitle: 'Global Tech Innovations Summit 2026',
+    seminarTitle: 'Global Tech Innovations Summit 2021',
     code: 'REG-BOBTECH',
     status: 'registered',
     createdAt: dateISO(-3),
@@ -144,7 +144,7 @@ export const INITIAL_MOCK_REGISTRATIONS: Registration[] = [
     userName: 'Alice Johnson',
     userEmail: 'alice.j@example.com',
     seminarId: 'sem_tech_summit',
-    seminarTitle: 'Global Tech Innovations Summit 2026',
+    seminarTitle: 'Global Tech Innovations Summit 2021',
     code: 'REG-ALICETE',
     status: 'waitlisted',
     createdAt: dateISO(-2),

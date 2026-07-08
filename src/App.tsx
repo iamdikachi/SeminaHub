@@ -91,7 +91,7 @@ const getCategoryVisuals = (category: string) => {
   switch (category) {
     case 'Technology':
       return {
-        gradient: 'from-slate-900 via-indigo-950 to-indigo-900',
+        gradient: 'bg-indigo-950',
         textColor: 'text-indigo-200',
         badgeBg: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/20',
         glowColor: 'shadow-indigo-500/10',
@@ -109,7 +109,7 @@ const getCategoryVisuals = (category: string) => {
       };
     case 'Business & Finance':
       return {
-        gradient: 'from-slate-900 via-emerald-950 to-emerald-900',
+        gradient: 'bg-emerald-950',
         textColor: 'text-emerald-200',
         badgeBg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/20',
         glowColor: 'shadow-emerald-500/10',
@@ -126,7 +126,7 @@ const getCategoryVisuals = (category: string) => {
       };
     case 'Health & Science':
       return {
-        gradient: 'from-slate-900 via-rose-950 to-rose-900',
+        gradient: 'bg-rose-950',
         textColor: 'text-rose-200',
         badgeBg: 'bg-rose-500/15 text-rose-300 border-rose-500/20',
         glowColor: 'shadow-rose-500/10',
@@ -143,7 +143,7 @@ const getCategoryVisuals = (category: string) => {
       };
     case 'Art & Design':
       return {
-        gradient: 'from-slate-900 via-purple-950 to-fuchsia-900',
+        gradient: 'bg-purple-950',
         textColor: 'text-purple-200',
         badgeBg: 'bg-purple-500/15 text-purple-300 border-purple-500/20',
         glowColor: 'shadow-purple-500/10',
@@ -161,7 +161,7 @@ const getCategoryVisuals = (category: string) => {
       };
     case 'Personal Development':
       return {
-        gradient: 'from-slate-900 via-amber-950 to-amber-900',
+        gradient: 'bg-amber-950',
         textColor: 'text-amber-200',
         badgeBg: 'bg-amber-500/15 text-amber-300 border-amber-500/20',
         glowColor: 'shadow-amber-500/10',
@@ -178,7 +178,7 @@ const getCategoryVisuals = (category: string) => {
       };
     default:
       return {
-        gradient: 'from-slate-900 via-neutral-900 to-neutral-800',
+        gradient: 'bg-neutral-900',
         textColor: 'text-neutral-300',
         badgeBg: 'bg-neutral-500/15 text-neutral-300 border-neutral-500/20',
         glowColor: 'shadow-neutral-500/10',
@@ -370,7 +370,15 @@ export default function App() {
   // Handle Demo Mode synchronization & initial state loading
   useEffect(() => {
     if (isDemoMode) {
-      const sems = getLocalMockData<Seminar[]>('seminars', INITIAL_MOCK_SEMINARS);
+      let sems = getLocalMockData<Seminar[]>('seminars', INITIAL_MOCK_SEMINARS);
+      if (sems.some(s => s.startDate.includes('2026') || s.title.includes('2026'))) {
+        clearLocalMockData();
+        sems = INITIAL_MOCK_SEMINARS;
+        saveLocalMockData('seminars', INITIAL_MOCK_SEMINARS);
+        saveLocalMockData('registrations', INITIAL_MOCK_REGISTRATIONS);
+        saveLocalMockData('sessions', INITIAL_MOCK_SESSIONS);
+        saveLocalMockData('attendances', INITIAL_MOCK_ATTENDANCES);
+      }
       const regs = getLocalMockData<Registration[]>('registrations', INITIAL_MOCK_REGISTRATIONS);
       const sess = getLocalMockData<Record<string, Session[]>>('sessions', INITIAL_MOCK_SESSIONS);
       const atts = getLocalMockData<Record<string, Attendance[]>>('attendances', INITIAL_MOCK_ATTENDANCES);
@@ -1668,9 +1676,6 @@ export default function App() {
                 {/* STUNNING CAMPUS HERO GREETING DASHBOARD BANNER */}
                 <div className="relative rounded-[32px] overflow-hidden bg-indigo-950 text-white p-8 sm:p-12 border border-indigo-900 shadow-2xl">
                   {/* Subtle vector background art */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-indigo-800/30 via-transparent to-transparent opacity-70 pointer-events-none" />
-                  <div className="absolute -right-8 -top-8 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
-                  <div className="absolute -left-8 -bottom-8 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
                   
                   <div className="relative z-10 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8">
                     <div className="space-y-4">
@@ -1821,7 +1826,7 @@ export default function App() {
                           className="bg-white rounded-3xl border border-neutral-100/85 shadow-xl shadow-neutral-100/40 hover:shadow-2xl hover:border-neutral-200 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden group text-left"
                         >
                           {/* STYLISH CATEGORY COVER OVERLAY */}
-                          <div className={`h-36 relative bg-gradient-to-br ${visuals.gradient} p-5.5 flex flex-col justify-between overflow-hidden shrink-0`}>
+                          <div className={`h-36 relative ${visuals.gradient} p-5.5 flex flex-col justify-between overflow-hidden shrink-0`}>
                             {/* Abstract decorative graphic pattern */}
                             {visuals.pattern}
                             
@@ -2016,7 +2021,7 @@ export default function App() {
       {/* FOOTER */}
       <footer className="bg-white border-t border-neutral-100 py-8 mt-16">
         <div className="max-w-[1580px] mx-auto px-6 sm:px-8 lg:px-12 text-center text-xs sm:text-sm text-neutral-450 font-bold">
-          SeminarHub Event Registration Platform © 2026. Powered by React, Tailwind & Cloud Firestore.
+          SeminarHub Event Registration Platform © 2021. Powered by React, Tailwind & Cloud Firestore.
         </div>
       </footer>
 

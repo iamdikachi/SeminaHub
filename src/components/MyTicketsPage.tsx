@@ -143,7 +143,7 @@ export const MyTicketsPage: React.FC<MyTicketsPageProps> = ({
             {activeReg && (
               <div className="bg-white rounded-3xl border border-neutral-100/80 p-8 shadow-2xl shadow-neutral-100/50 space-y-6">
                 {/* Visual Digital Ticket */}
-                <div className="relative border-none rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-indigo-900 via-slate-900 to-neutral-900 text-white">
+                <div className="relative border-none rounded-3xl overflow-hidden shadow-xl bg-neutral-900 text-white">
                   {/* Decorative circle cuts */}
                   <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-r border-neutral-200 z-10 hidden sm:block" />
                   <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-l border-neutral-200 z-10 hidden sm:block" />

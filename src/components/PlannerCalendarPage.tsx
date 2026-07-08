@@ -11,10 +11,10 @@ export const PlannerCalendarPage: React.FC<PlannerCalendarPageProps> = ({
   seminars,
   onViewSeminarDetails
 }) => {
-  // We'll anchor on July 2026 since the workshops are set around this date range
-  const [currentYear, setCurrentYear] = useState(2026);
+  // We'll anchor on July 2021 since the workshops are set around this date range
+  const [currentYear, setCurrentYear] = useState(2021);
   const [currentMonth, setCurrentMonth] = useState(6); // 0-indexed, 6 = July
-  const [selectedDay, setSelectedDay] = useState<number | null>(8); // Default to July 8, 2026
+  const [selectedDay, setSelectedDay] = useState<number | null>(8); // Default to July 8, 2021
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
