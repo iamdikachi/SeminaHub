@@ -1,0 +1,6 @@
+{
+  "name": "Seminar Registration & Tracking System",
+  "description": "An all-in-one web platform for managing seminar events, multi-session agendas, online registration, capacity/waitlist limits, real-time QR check-ins, and performance reporting.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

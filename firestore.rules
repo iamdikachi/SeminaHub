@@ -1,0 +1,207 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ------------------
+    // Global Helpers
+    // ------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "emmanuelnnadi097@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ------------------
+    // Entity Validation helpers
+    // ------------------
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'role']) &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.name is string && data.name.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.role is string && (data.role == 'Admin' || data.role == 'Organizer' || data.role == 'Attendee');
+    }
+
+    function isValidSeminar(data) {
+      return data.keys().hasAll(['title', 'description', 'startDate', 'endDate', 'venue', 'capacity', 'status', 'organizerId', 'category', 'registeredCount', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 5000 &&
+             data.startDate is string && data.startDate.size() <= 100 &&
+             data.endDate is string && data.endDate.size() <= 100 &&
+             data.venue is string && data.venue.size() <= 500 &&
+             (data.capacity is int || data.capacity is float) && data.capacity > 0 && data.capacity <= 10000 &&
+             data.status is string && (data.status == 'Draft' || data.status == 'Published' || data.status == 'Closed') &&
+             data.organizerId is string && data.organizerId.size() <= 128 &&
+             data.category is string && data.category.size() <= 100 &&
+             (data.registeredCount is int || data.registeredCount is float) && data.registeredCount >= 0 &&
+             data.createdAt is string && data.createdAt.size() <= 100;
+    }
+
+    function isValidSession(data) {
+      return data.keys().hasAll(['seminarId', 'title', 'speakerName', 'startTime', 'endTime']) &&
+             data.seminarId is string && data.seminarId.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.speakerName is string && data.speakerName.size() <= 200 &&
+             data.startTime is string && data.startTime.size() <= 100 &&
+             data.endTime is string && data.endTime.size() <= 100;
+    }
+
+    function isValidRegistration(data) {
+      return data.keys().hasAll(['userId', 'userName', 'userEmail', 'seminarId', 'seminarTitle', 'code', 'status', 'createdAt', 'organizerId']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() <= 128 &&
+             data.userEmail is string && data.userEmail.size() <= 256 &&
+             data.seminarId is string && data.seminarId.size() <= 128 &&
+             data.seminarTitle is string && data.seminarTitle.size() <= 200 &&
+             data.code is string && data.code.size() <= 64 &&
+             data.status is string && (data.status == 'registered' || data.status == 'waitlisted' || data.status == 'cancelled') &&
+             data.createdAt is string && data.createdAt.size() <= 100 &&
+             data.organizerId is string && data.organizerId.size() <= 128;
+    }
+
+    function isValidAttendance(data) {
+      return data.keys().hasAll(['registrationId', 'sessionId', 'seminarId', 'checkedInAt']) &&
+             data.registrationId is string && data.registrationId.size() <= 128 &&
+             data.sessionId is string && data.sessionId.size() <= 128 &&
+             data.seminarId is string && data.seminarId.size() <= 128 &&
+             data.checkedInAt is string && data.checkedInAt.size() <= 100;
+    }
+
+    // ------------------
+    // Collection Match Rules
+    // ------------------
+    
+    // 1. Users
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+    }
+
+    // 2. Seminars
+    match /seminars/{seminarId} {
+      allow get: if resource.data.status == 'Published' || resource.data.status == 'Closed' || (isSignedIn() && (resource.data.organizerId == request.auth.uid || isAdmin()));
+      allow list: if resource.data.status == 'Published' || resource.data.status == 'Closed' || (isSignedIn() && (resource.data.organizerId == request.auth.uid || isAdmin()));
+      allow create: if isSignedIn() && (incoming().organizerId == request.auth.uid || isAdmin()) && isValidSeminar(incoming());
+      allow update: if isSignedIn() && (
+        ((existing().organizerId == request.auth.uid || isAdmin()) && isValidSeminar(incoming())) ||
+        (
+          incoming().title == existing().title &&
+          incoming().description == existing().description &&
+          incoming().startDate == existing().startDate &&
+          incoming().endDate == existing().endDate &&
+          incoming().venue == existing().venue &&
+          incoming().capacity == existing().capacity &&
+          incoming().status == existing().status &&
+          incoming().organizerId == existing().organizerId &&
+          incoming().category == existing().category &&
+          incoming().createdAt == existing().createdAt &&
+          (incoming().registeredCount is int || incoming().registeredCount is float) &&
+          incoming().registeredCount >= 0
+        )
+      );
+      allow delete: if isSignedIn() && (existing().organizerId == request.auth.uid || isAdmin());
+
+      // 3. Subcollection Sessions
+      match /sessions/{sessionId} {
+        allow read: if true; // Public readable to list event sessions
+        allow create: if isSignedIn() && (
+          isAdmin() || (
+            existsAfter(/databases/$(database)/documents/seminars/$(seminarId)) &&
+            getAfter(/databases/$(database)/documents/seminars/$(seminarId)).data.organizerId == request.auth.uid
+          )
+        ) && isValidSession(incoming());
+        allow update: if isSignedIn() && (
+          isAdmin() || (
+            existsAfter(/databases/$(database)/documents/seminars/$(seminarId)) &&
+            getAfter(/databases/$(database)/documents/seminars/$(seminarId)).data.organizerId == request.auth.uid
+          )
+        ) && isValidSession(incoming());
+        allow delete: if isSignedIn() && (
+          isAdmin() || (
+            exists(/databases/$(database)/documents/seminars/$(seminarId)) &&
+            get(/databases/$(database)/documents/seminars/$(seminarId)).data.organizerId == request.auth.uid
+          )
+        );
+
+        // 4. Subcollection Attendances
+        match /attendances/{attendanceId} {
+          allow read: if isSignedIn() && (
+            isAdmin() || (
+              exists(/databases/$(database)/documents/seminars/$(seminarId)) &&
+              get(/databases/$(database)/documents/seminars/$(seminarId)).data.organizerId == request.auth.uid
+            )
+          );
+          allow create: if isSignedIn() && (
+            isAdmin() || (
+              existsAfter(/databases/$(database)/documents/seminars/$(seminarId)) &&
+              getAfter(/databases/$(database)/documents/seminars/$(seminarId)).data.organizerId == request.auth.uid
+            )
+          ) && isValidAttendance(incoming());
+          allow update: if isSignedIn() && (
+            isAdmin() || (
+              existsAfter(/databases/$(database)/documents/seminars/$(seminarId)) &&
+              getAfter(/databases/$(database)/documents/seminars/$(seminarId)).data.organizerId == request.auth.uid
+            )
+          ) && isValidAttendance(incoming());
+          allow delete: if isSignedIn() && (
+            isAdmin() || (
+              exists(/databases/$(database)/documents/seminars/$(seminarId)) &&
+              get(/databases/$(database)/documents/seminars/$(seminarId)).data.organizerId == request.auth.uid
+            )
+          );
+        }
+      }
+    }
+
+    // 5. Registrations
+    match /registrations/{registrationId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.organizerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.organizerId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && isValidRegistration(incoming());
+      allow update: if isSignedIn() && (
+        ((resource.data.userId == request.auth.uid || resource.data.organizerId == request.auth.uid || isAdmin()) && isValidRegistration(incoming()) && (
+          incoming().userId == existing().userId &&
+          incoming().seminarId == existing().seminarId &&
+          incoming().code == existing().code
+        )) ||
+        (
+          existing().status == 'waitlisted' &&
+          incoming().status == 'registered' &&
+          incoming().userId == existing().userId &&
+          incoming().userName == existing().userName &&
+          incoming().userEmail == existing().userEmail &&
+          incoming().seminarId == existing().seminarId &&
+          incoming().seminarTitle == existing().seminarTitle &&
+          incoming().code == existing().code &&
+          incoming().organizerId == existing().organizerId &&
+          incoming().createdAt == existing().createdAt
+        )
+      );
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.organizerId == request.auth.uid || isAdmin());
+    }
+  }
+}
